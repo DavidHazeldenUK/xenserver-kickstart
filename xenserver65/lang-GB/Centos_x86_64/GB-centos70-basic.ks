@@ -1,12 +1,13 @@
-# CentOS 7.0 kickstart for XenServer (PVHVM MBR)
-# UK Version
-##########################################
+# CentOS 7.0 kickstart for XenServer (PVHVM MBR) UK Version
+#Boot Parameters Xenserver 6.5 >>> Select Centos 6 not 7
+#Install from URL http://mirror.centos.org/centos/7/os/x86_64/
+#console=hvc0 utf8 nogpt noipv6 ks=https://github.com/frederickding/xenserver-kickstart/raw/develop/centos-7.0/cent70-server.ks
 
 install
 
 # Install from a friendly mirror and add updates
-url --mirrorlist httpmirrorlist.centos.orgrelease=7&arch=x86_64&repo=os
-repo --name=centos-updates --mirrorlist=httpmirrorlist.centos.orgrelease=7&arch=x86_64&repo=updates
+url --mirrorlist http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=os
+repo --name=centos-updates --mirrorlist=http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=updates
 
 # Language and keyboard setup
 lang en_GB.UTF-8
@@ -44,10 +45,8 @@ eula --agreed
 
 # Setup the disk
 zerombr
-clearpart --all
-part boot --fstype=ext3 --size=256 --asprimary
-part  --fstype=ext4 --grow --size=1024 --asprimary
-bootloader --timeout=5 --location=mbr
+clearpart --all 
+part / --grow --size 1 --fstype ext4
 
 # Shutdown when the kickstart is done
 halt
