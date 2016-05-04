@@ -1,123 +1,130 @@
 # CentOS 7.0 kickstart for XenServer (PVHVM MBR) UK Version
 #Boot Parameters Xenserver 6.5 >>> Select Centos 6 not 7
 #Install from URL http://mirror.centos.org/centos/7/os/x86_64/
-#console=hvc0 utf8 nogpt noipv6 ks=https://github.com/frederickding/xenserver-kickstart/raw/develop/centos-7.0/cent70-server.ks
+#console=hvc0 utf8 nogpt noipv6 ks=http://kickstarts.systemhosted.com/xenserver-anaconda-kickstarts/xenserver65/lang-GB/Centos_x86_64/GB-centos70-basic.ks
+#Tested working May 2016
 
+# Text mode or graphical mode?
+text
+skipx
+eula --agreed
+
+# Install or upgrade?
 install
 
-# Install from a friendly mirror and add updates
-url --mirrorlist http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=os
-repo --name=centos-updates --mirrorlist=http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=updates
+# System authorization information
+auth --enableshadow --passalgo=sha512
+
+# SElinux
+selinux --enforcing
+
+# Use network installation
+url --url="http://mirror.centos.org/centos/7/os/x86_64/"
+repo --name=centos-updates --mirrorlist="http://mirrorlist.centos.org/?release=7&arch=x86_64&repo=updates"
+
+# Firewall configuration (open ports --port=7001:udp,4241:tcp)
+firewall --enabled --service=ssh
+
+# Run the Setup Agent on first boot (the post section replaces firsboot 
+# for non-interactive installations
+#firstboot --enable
 
 # Language and keyboard setup
-lang en_GB.UTF-8
-keyboard GB
+lang en_UK --addsupport=cs_CZ,de_DE,en_US
+timezone "Europe/London" --ntpservers="0.uk.pool.ntp.org,1.uk.pool.ntp.org,2.uk.pool.ntp.org,3.uk.pool.ntp.org"
+keyboard --vckeymap=UK --xlayouts='UK'
+
+# Install from a friendly mirror and add updates
+install
+
+# Network information (DCHP) --ipv6=auto or 
+network  --bootproto=dhcp --noipv6 --activate
+
+# Authentication
+
+#rootpw --lock This option will also disable the Root Password screens in both the graphical and text-based manual installation. 
+
+# Root password (use "grub-md5-crypt" to get the crypted version)
+# Password is Qwerty1234
+rootpw --iscrypted $1$kA8Mm$MFXATNrvySgD98ns2VSSh0 --lock
+# Add Wheel User
+user --name=xenadmin --password=Qwerty1234 --plaintext --gecos=Xen Admin Wheel --groups=user,wheel
+# if you want to preset the user password in a public kickstart file, use SHA512crypt e.g.
+authconfig --enableshadow --passalgo=sha512
+
+
+#/boot partition - recommended size at least 500 MB 
+#root partition - recommended size of 10 GB
+#/home partition - recommended size at least 1 GB
+#swap partition - recommended size at least 1 GB
+
+#Drives
+zerombr 
+bootloader --location=mbr --boot-drive=xvda
+clearpart --all --initlabel --drives=xvda
+autopart --type=lvm --fstype=ext4
+
+# Reboot after installation?
+reboot 
+
 
 # Configure networking without IPv6, firewall off
 
 # for STATIC IP uncomment and configure
 # network --onboot=yes --device=eth0 --bootproto=static --ip=192.168.###.### --netmask=255.255.255.0 --gateway=192.168.###.### --nameserver=###.###.###.### --noipv6 --hostname=$$$
 
-# for DHCP
-network --bootproto=dhcp --device=eth0 --onboot=on
+# for DHCP #not sure you even have to specify a device --device=eth0
+network --bootproto=dhcp --onboot=on
 
-firewall --enabled --ssh
 
-# Set timezone
-timezone --utc EtcUTC
-
-# Authentication
-rootpw --lock
-# if you want to preset the root password in a public kickstart file, use SHA512crypt e.g.
-# rootpw --iscrypted $6$9dC4m770Q1o$FCOvPxuqc1B22HM21M5WuUfhkiQntzMuAV7MY0qfVcvhwNQ2L86PcnDWfjDd12IFxWtRiTuvOniB0Q3Xpf2I.
-user --name=centos --password=Asdfqwerty --plaintext --gecos=CentOS User --shell=binbash --groups=user,wheel
-# if you want to preset the user password in a public kickstart file, use SHA512crypt e.g.
-# user --name=centos --password=$6$9dC4m770Q1o$FCOvPxuqc1B22HM21M5WuUfhkiQntzMuAV7MY0qfVcvhwNQ2L86PcnDWfjDd12IFxWtRiTuvOniB0Q3Xpf2I. --iscrypted --gecos=CentOS User --shell=binbash --groups=user,wheel
-authconfig --enableshadow --passalgo=sha512
-
-# SELinux enabled
-selinux --enforcing
-
-# Disable anything graphical
-skipx
-text
-eula --agreed
-
-# Setup the disk
-zerombr
-clearpart --all 
-part / --grow --size 1 --fstype ext4
-
-# Shutdown when the kickstart is done
-halt
+# /usr/bin/sh, /usr/bin/bash, and /usr/bin/python
+%pre --interpreter=/usr/bin/python
+%end                     
 
 # Minimal package set
-%packages --excludedocs
-@base
-@network-file-system-client
-deltarpm
-yum-plugin-fastestmirror
-dracut-config-generic
--dracut-config-rescue
--plymouth
--fprintd-pam
--wireless-tools
--NetworkManager
--NetworkManager-tui
+%packages --nobase --ignoremissing
+@core --nodefaults
+dhclient
+iputils
+system-config-securitylevel-tui
+system-config-firewall-base
+audit
+pciutils
+bash
+coreutils
+kernel
+e2fsprogs
+passwd
+policycoreutils
+chkconfig
+rootfiles
+yum
+vim-minimal
+nano
+acpid
+openssh-clients
+openssh-server
+curl
+-aic94xx-firmware*
+-alsa-*
+-biosdevname
+-btrfs-progs*
+-dracut-network
+-iprutils
+-ivtv*
+-iwl*firmware
+-libertas*
 %end
 
 %post --log=rootks-post.log
 
-echo -n etcfstab fixes
-# update fstab for the root partition
-perl -pi -e 's(defaults)$1,noatime,nodiratime' etcfstab
-echo .
-
-echo -n Network fixes
-# initscripts don't like this file to be missing.
-cat  etcsysconfignetwork  EOF
-NETWORKING=yes
-NOZEROCONF=yes
-EOF
-echo -n .
-
-# For cloud images, 'eth0' _is_ the predictable device name, since
-# we don't want to be tied to specific virtual (!) hardware
-rm -f etcudevrules.d70
-ln -s devnull etcudevrules.d80-net-name-slot.rules
-echo -n .
-
-# simple eth0 config, again not hard-coded to the build hardware
-cat  etcsysconfignetwork-scriptsifcfg-eth0  EOF
-DEVICE=eth0
-BOOTPROTO=dhcp
-ONBOOT=yes
-TYPE=Ethernet
-PERSISTENT_DHCLIENT=yes
-EOF
-echo -n .
-
-# generic localhost names
-cat  etchosts  EOF
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
-1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-
-EOF
-echo -n .
+#Example Mount an NFS share
+#mkdir /mnt/temp
+#mount -o nolock 10.10.0.2:/usr/new-machines /mnt/temp
+#openvt -s -w -- /mnt/temp/runme
+#umount /mnt/temp
 
 # since NetworkManager is disabled, need to enable normal networking
 chkconfig network on
-echo .
 
-# utility script
-echo -n Utility scripts
-echo == Utility scripts ==  rootks-post.debug.log
-wget -O optdomu-hostname.sh httpsgithub.comfrederickdingxenserver-kickstartrawdevelopoptdomu-hostname.sh 2 rootks-post.debug.log
-chmod +x optdomu-hostname.sh
-echo .
-
-# generalization
-echo -n Generalizing
-rm -f etcsshssh_host_
-echo .
 %end
