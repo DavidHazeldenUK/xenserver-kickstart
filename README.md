@@ -17,8 +17,6 @@ Going to need an active Internet Connection and DHCP for providing IP address to
 
 6.) Add Raw Github url to Advanced OS Boot Parameters
 
-e.g.
-
 console=hvc0 utf8 nogpt noipv6 ks=https://raw.githubusercontent.com/frederickding/xenserver-kickstart/master/f20/f20-server.ks
 
 7.) Specificy VPS Location on which NODE, Appropriate CPU, Memory, Network Adapter
