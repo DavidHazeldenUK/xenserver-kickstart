@@ -1,5 +1,5 @@
 # Build a basic CentOS 67 Image with DHCP Networking
-# Use this Mirror (HTTPS fails)) http://mirror.centos.org/centos/6.8/os/x86_64/
+# Use this Mirror (HTTPS fails)) http://mirror.centos.org/centos/6.7/os/x86_64/
 # Use these boot parameters in Xenserver
 # console=hvc0 utf8 nogpt noipv6 ks=http://kickstarts.systemhosted.com/xenserver-anaconda-kickstarts/xenserver65/lang-GB/Centos_x86_64/GB-centos67-basic.ks
 
